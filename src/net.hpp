@@ -4,6 +4,7 @@
 #include "neuron.cpp"
 
 #include <vector>
+#include <iostream>
 
 typedef std::vector<Neuron> Layer;
 
