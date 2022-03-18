@@ -1,10 +1,11 @@
 #ifndef NET_HPP_
 #define NET_HPP_
 
-#include "neuron.cpp"
-
 #include <vector>
 #include <iostream>
+#include <cassert>
+
+#include "neuron.cpp"
 
 typedef std::vector<Neuron> Layer;
 
