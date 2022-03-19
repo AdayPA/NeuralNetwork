@@ -34,6 +34,11 @@ void Neuron::calcOutputGradients(double targetVal) {
   m_gradient_ = delta * Neuron::transferFunctionDerivative(m_outputVal_);
 }
 
+void  Neuron::calcHiddenGradients(const Layer &nextLayer) {
+  double dow = sumDOW(nextLayer);
+  m_gradient_ = dow * Neuron::transferFunctionDerivative(m_outputVal_);
+}
+
 
 
 #endif
