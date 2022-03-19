@@ -39,6 +39,14 @@ void  Neuron::calcHiddenGradients(const Layer &nextLayer) {
   m_gradient_ = dow * Neuron::transferFunctionDerivative(m_outputVal_);
 }
 
+double Neuron::sumDOW(const Layer &nextLayer) const {
+  double sum = 0.0;
+  for (unsigned n = 0; n < nextLayer.size() - 1; n++) {
+    sum += m_outputWeights_[n].weight * nextLayer[n].m_gradient_;
+  }
+  return sum;
+}
+
 
 
 #endif
