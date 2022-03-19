@@ -5,7 +5,7 @@
 
 #include <chrono>
 #include <thread>
-#include <unistd.h>
+#include <process.h>
 
 void showVectorVals(std::string label, std::vector<double> &v) {
     std::cout << label << " ";
@@ -16,7 +16,6 @@ void showVectorVals(std::string label, std::vector<double> &v) {
 }
 
 int main() {
-
     Dataset data("../data/input/test.txt", "../data/output/");
     // e.g., { 3, 2, 1 }
     std::vector<unsigned> topology;
@@ -53,6 +52,6 @@ int main() {
        // bar.print();
     }
     std::cout << std::endl << "Done" << std::endl;
-
+    system("start gnuplot -p gnuplot.txt");
     return 0;
 }

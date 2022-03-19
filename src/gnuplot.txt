@@ -1,0 +1,9 @@
+set terminal pngcairo enhanced font "arial,10" fontscale 1.0 size 1080,500
+set output '../pictures/AverageError.png'
+reset
+set xrange [0:2100]
+set title "Average Error"
+set xlabel "x"
+set ylabel "Y"
+set grid
+plot "AverageError.txt" title "" with points pt 7
