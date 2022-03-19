@@ -1,6 +1,6 @@
 #include "net.cpp"
 #include "neuron.cpp"
-#include "trainingdata.cpp"
+#include "dataset.cpp"
 
 void showVectorVals(std::string label, std::vector<double> &v) {
     std::cout << label << " ";
@@ -12,43 +12,40 @@ void showVectorVals(std::string label, std::vector<double> &v) {
 
 int main() {
 
-  TrainingData trainData("../data/test.txt");
-
+    Dataset data("../data/input/test.txt", "../data/output/");
     // e.g., { 3, 2, 1 }
     std::vector<unsigned> topology;
-    trainData.getTopology(topology);
+    data.getTopology(topology);
 
     Net myNet(topology);
 
     std::vector<double> inputVals, targetVals, resultVals;
     int trainingPass = 0;
 
-    while (!trainData.isEof()) {
+    while (!data.isEof()) {
         ++trainingPass;
-        std::cout << std::endl << "Pass " << trainingPass;
-
+        auto s = std::to_string(trainingPass);
+        data.writeOutput("Data " + s);
         // Get new input data and feed it forward:
-        if (trainData.getNextInputs(inputVals) != topology[0]) {
+        if (data.getNextInputs(inputVals) != topology[0]) {
             break;
         }
-        showVectorVals(": Inputs:", inputVals);
+        data.writeEvolution(": Inputs:", inputVals);
         myNet.feedForward(inputVals);
 
         // Collect the net's actual output results:
         myNet.getResults(resultVals);
-        showVectorVals("Outputs:", resultVals);
+        data.writeEvolution("Outputs:", resultVals);
 
         // Train the net what the outputs should have been:
-        trainData.getTargetOutputs(targetVals);
-        showVectorVals("Targets:", targetVals);
+        data.getTargetOutputs(targetVals);
+        data.writeEvolution("Targets:", targetVals);
         assert(targetVals.size() == topology.back());
 
         myNet.backProp(targetVals);
 
         // Report how well the training is working, average over recent samples:
-        std::cout << "Net recent average error: "
-                << myNet.getRecentAverageError() << std::endl;
+        data.writeOutputError(myNet.getRecentAverageError());
     }
-
     std::cout << std::endl << "Done" << std::endl;
 }

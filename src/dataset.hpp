@@ -5,18 +5,23 @@
 #include <fstream>
 #include <sstream>
 
-class TrainingData {
+class Dataset {
 public:
-    TrainingData(const std::string filename);
+    Dataset(const std::string, const std::string );
+    ~Dataset();
     bool isEof(void) { return m_trainingDataFile.eof(); }
     void getTopology(std::vector<unsigned> &topology);
-
+    void writeOutputError(const double);
+    void writeOutput(std::string);
+    void writeEvolution(std::string, std::vector<double> &);
     // Returns the number of input values read from the file:
     unsigned getNextInputs(std::vector<double> &inputVals);
     unsigned getTargetOutputs(std::vector<double> &targetOutputVals);
 
 private:
      std::ifstream m_trainingDataFile;
+     std::ofstream outfileError;
+     std::ofstream outfileEvolution;
 };
 
 #endif
