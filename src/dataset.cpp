@@ -90,4 +90,14 @@ void Dataset::writeOutputError(const double value) {
     outfileError << value << std::endl;
 }
 
+unsigned Dataset::Count_lines (const std::string file) {
+    unsigned lines = 0;
+    std::ifstream file_to_count(file);
+    std::string unused;
+    while (std::getline(file_to_count, unused)) {
+        ++lines;
+    }
+    return lines;
+}
+
 #endif

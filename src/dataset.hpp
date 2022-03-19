@@ -17,6 +17,7 @@ public:
     // Returns the number of input values read from the file:
     unsigned getNextInputs(std::vector<double> &inputVals);
     unsigned getTargetOutputs(std::vector<double> &targetOutputVals);
+    unsigned Count_lines (const std::string);
 
 private:
      std::ifstream m_trainingDataFile;
