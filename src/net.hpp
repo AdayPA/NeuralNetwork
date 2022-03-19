@@ -15,6 +15,7 @@ class Net {
     void feedForward(const std::vector<double> &);
     void backProp(const std::vector<double> &);
     void getResults(std::vector<double> &) const;
+    inline double getRecentAverageError(void) const { return m_recentAverageError_; }
   private:
     std::vector<Layer> m_layers_; // m_layers_[layerNum][neuronNum]
     double m_error_;

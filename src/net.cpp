@@ -10,8 +10,8 @@ Net::Net(const std::vector<unsigned> &topology) {
     unsigned numOutputs = layerNum == topology.size() - 1 ? 0 : topology[layerNum + 1];
     for (unsigned neuronNum = 0; neuronNum <= topology[layerNum]; neuronNum++) {
       m_layers_.back().push_back(Neuron(numOutputs, neuronNum));
-      std::cout << "Made a Neuron!" << std::endl;
     }
+    m_layers_.back().back().setOutputVal(1.0);
   }
 }
 
