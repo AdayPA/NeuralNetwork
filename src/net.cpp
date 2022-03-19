@@ -27,7 +27,37 @@ void Net::feedForward(const std::vector<double> &inputVals) {
     }
   }
 }
-void Net::backProp(const std::vector<double> &targetVals) {}
+
+void Net::backProp(const std::vector<double> &targetVals) {
+  // RMS
+  Layer &outputLayer = m_layers_.back();
+  m_error_ = 0.0;
+  for (unsigned n = 0; n < outputLayer.size() - 1; n++) {
+    double delta = targetVals[n] - outputLayer[n].getOutputVal();
+    m_error_ += delta * delta;
+  }
+  m_error_ /= outputLayer.size() - 1;
+  m_error_ = sqrt(m_error_);
+  m_recentAverageError_ = (m_recentAverageError_ * m_recentAverageSmoothingFactor_ + m_error_) / (m_recentAverageSmoothingFactor_ + 1.0);
+  for (unsigned n = 0; n < outputLayer.size() - 1; n++) {
+    outputLayer[n].calcOutputGradients(targetVals[n]);
+  }
+  for (unsigned layerNum = m_layers_.size() - 2; layerNum > 0; layerNum--) {
+    Layer &hiddenLayer = m_layers_[layerNum];
+    Layer &nextLayer = m_layers_[layerNum + 1];
+    for (unsigned n = 0; n < hiddenLayer.size(); n++) {
+      hiddenLayer[n].calcHiddenGradients(nextLayer);
+    }  
+  }
+  for (unsigned layerNum = m_layers_.size() - 1; layerNum > 0; layerNum--) {
+    Layer &layer = m_layers_[layerNum];
+    Layer &prevLayer = m_layers_[layerNum - 1];
+    for (unsigned n = 0; n < layer.size() - 1; n++) {
+      layer[n].updateInputWeights(prevLayer);
+    }
+  }
+}
+
 void Net::getResults(std::vector<double> &resultVals) const {}
 
 #endif

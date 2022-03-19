@@ -17,6 +17,9 @@ class Net {
     void getResults(std::vector<double> &) const;
   private:
     std::vector<Layer> m_layers_; // m_layers_[layerNum][neuronNum]
+    double m_error_;
+    double m_recentAverageError_;
+    double m_recentAverageSmoothingFactor_;
 };
 
 #endif

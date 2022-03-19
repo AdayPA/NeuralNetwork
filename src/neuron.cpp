@@ -4,7 +4,7 @@
 #include "neuron.hpp"
 
 Neuron::Neuron(unsigned numOutputs, unsigned myIndex) {
-  m_myIndex = myIndex;
+  m_myIndex_ = myIndex;
   for (unsigned c = 0; c < numOutputs; c++) {
     m_outputWeights_.push_back(Connection());
     m_outputWeights_.back().weight = randomWeight();
@@ -14,7 +14,7 @@ Neuron::Neuron(unsigned numOutputs, unsigned myIndex) {
 void Neuron::feedForward(const Layer &prevLayer) {
   double sum = 0.0;
   for (unsigned n = 0; n < prevLayer.size(); n++) {
-    sum += prevLayer[n].getOutputVal() * prevLayer[n].m_outputWeights_[m_myIndex].weight;
+    sum += prevLayer[n].getOutputVal() * prevLayer[n].m_outputWeights_[m_myIndex_].weight;
   }
   m_outputVal_ = Neuron::transferFunction(sum);
 }
@@ -28,5 +28,12 @@ double Neuron::transferFunctionDerivative(double x) {
   // tanh derivation
   return 1.0 - x * x;
 }
+
+void Neuron::calcOutputGradients(double targetVal) {
+  double delta = targetVal - m_outputVal_;
+  m_gradient_ = delta * Neuron::transferFunctionDerivative(m_outputVal_);
+}
+
+
 
 #endif
