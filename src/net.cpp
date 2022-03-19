@@ -58,6 +58,11 @@ void Net::backProp(const std::vector<double> &targetVals) {
   }
 }
 
-void Net::getResults(std::vector<double> &resultVals) const {}
+void Net::getResults(std::vector<double> &resultVals) const {
+  resultVals.clear();
+  for (unsigned n = 0; n < m_layers_.back().size() - 1; n++) {
+    resultVals.push_back(m_layers_.back()[n].getOutputVal());
+  }
+}
 
 #endif

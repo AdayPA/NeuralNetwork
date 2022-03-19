@@ -3,6 +3,9 @@
 
 #include "neuron.hpp"
 
+double Neuron::eta = 0.15;
+double Neuron::alpha = 0.5; 
+
 Neuron::Neuron(unsigned numOutputs, unsigned myIndex) {
   m_myIndex_ = myIndex;
   for (unsigned c = 0; c < numOutputs; c++) {
@@ -47,6 +50,14 @@ double Neuron::sumDOW(const Layer &nextLayer) const {
   return sum;
 }
 
-
+void Neuron::updateInputWeights(Layer &prevLayer) {
+  for (unsigned n = 0; n < prevLayer.size(); n++) {
+     Neuron &neuron = prevLayer[n];
+     double oldDeltaWeight = neuron.m_outputWeights_[m_myIndex_].deltaWeight;
+     double newDeltaWeight = eta * neuron.getOutputVal() * m_gradient_ + alpha * oldDeltaWeight;
+     neuron.m_outputWeights_[m_myIndex_].deltaWeight = newDeltaWeight;
+     neuron.m_outputWeights_[m_myIndex_].weight += newDeltaWeight;
+  }
+}
 
 #endif

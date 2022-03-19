@@ -27,6 +27,8 @@ class Neuron {
     void updateInputWeights(Layer &);
 
   private:
+    static double eta; //learning rate
+    static double alpha; // momentum
     static double transferFunction(double);
     static double transferFunctionDerivative(double);
     inline static double randomWeight(void) { return rand() / double(RAND_MAX); };
