@@ -5,6 +5,8 @@
 #include <fstream>
 #include <sstream>
 
+#include "net.hpp"
+
 class Dataset {
 public:
     Dataset(const std::string, const std::string );
@@ -16,9 +18,9 @@ public:
     void writeEvolution(std::string, std::vector<double> &);
     void seek(void);
     void draw(void);
+    void trainNN(unsigned, Net &, std::vector<unsigned> &);
     void writeLogs(std::vector<unsigned> &, double , double , int &);
     inline void clear(void) { m_trainingDataFile.clear(); }
-    // Returns the number of input values read from the file:
     unsigned getNextInputs(std::vector<double> &);
     unsigned getTargetOutputs(std::vector<double> &);
     unsigned Count_lines (const std::string);

@@ -1,10 +1,14 @@
 #ifndef DATASET_CPP_
 #define DATASET_CPP_
 
+#include <process.h>
+
 #include <iomanip>
 #include <ctime>
 #include <sstream>
 #include <cstring>
+#include <cassert>
+#include <chrono>
 
 #include "dataset.hpp"
 
@@ -143,8 +147,48 @@ void Dataset::writeLogs(std::vector<unsigned> &topology, double error, double ti
     for (int i = 0; i < topology.size(); i++) {
         appendFileToWorkWith << topology[i] << " ";
     }
-    appendFileToWorkWith << error << " " << training << " " << time << "\n";
+    appendFileToWorkWith << " | " << error << " | " << training << " | " << time << " | " << nameOutputFile_ <<"\n";
     appendFileToWorkWith.close();
+}
+
+void Dataset::trainNN(unsigned epoch, Net &myNet, std::vector<unsigned> &topology) {
+    std::vector<double> inputVals, targetVals, resultVals;
+    int trainingPass = 0;
+    int total_training = 0;
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    start = std::chrono::system_clock::now();
+    for (int i = 0; i < epoch; i++) {
+        auto epo = std::to_string(i);
+        writeOutput("Epoch " + epo + "\n"); 
+        while (!isEof()) {
+            ++total_training;
+            ++trainingPass;
+            auto s = std::to_string(trainingPass);
+            writeOutput("Data " + s);
+            if (getNextInputs(inputVals) != topology[0]) {
+                break;
+            }
+            writeEvolution(": Inputs:", inputVals);
+            myNet.feedForward(inputVals);
+            myNet.getResults(resultVals);
+            writeEvolution("Outputs:", resultVals);
+            getTargetOutputs(targetVals);
+            writeEvolution("Targets:", targetVals);
+            assert(targetVals.size() == topology.back());
+            myNet.backProp(targetVals);
+            writeOutputError(myNet.getRecentAverageError());
+        }
+        trainingPass = 0;
+        clear();
+        seek();
+
+    }
+    end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end - start;
+    std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+    draw();
+    writeLogs(topology,myNet.getRecentAverageError(),elapsed_seconds.count(),total_training);
+    system("start gnuplot -p ../pictures/gnuplot.txt");
 }
 
 std::vector<std::string> Dataset::Split (std::string str, std::string delim) {
