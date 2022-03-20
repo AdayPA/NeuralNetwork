@@ -16,13 +16,18 @@ Dataset::Dataset(const std::string input, const std::string folder) {
     m_trainingDataFile.open(input.c_str());
     std::string tempError = folder + "AverageError_" + str + ".txt";
     std::string tempEvo = folder + "Evolution_" + str + ".txt";
+    nameOutputFile_ = "AverageError_" + str + ".txt";
+    outputFile_ = tempError;
     outfileError.open(tempError.c_str());
     outfileEvolution.open(tempEvo.c_str());
+    gnuFile_.open("../pictures/gnuplot1.txt");
+    inputFile_ = input;
 }
 
 Dataset::~Dataset() {
     m_trainingDataFile.close();
     outfileError.close();
+    gnuFile_.close();
 }
 
 void Dataset::writeOutput(std::string text) {
@@ -98,6 +103,26 @@ unsigned Dataset::Count_lines (const std::string file) {
         ++lines;
     }
     return lines;
+}
+
+void Dataset::seek(void) { 
+    m_trainingDataFile.seekg(0, std::ios::beg); 
+    std::string unused;
+    std::getline(m_trainingDataFile, unused);
+}
+
+void Dataset::draw(void) {
+    int total_lines = Count_lines(outputFile_);
+    auto lines = std::to_string(total_lines + (total_lines * 5 / 100));
+    gnuFile_ << "set terminal pngcairo enhanced font \"arial,10\" fontscale 1.0 size 1080,500" << std::endl;
+    gnuFile_ << "set output '../pictures/" + nameOutputFile_ + ".png'" << std::endl;
+    gnuFile_ << "reset" << std::endl;
+    gnuFile_ << "set xrange [0:"+ lines +"]" << std::endl;
+    gnuFile_ << "set title \"" + nameOutputFile_ + "\"" << std::endl;
+    gnuFile_ << "set xlabel \"X\"" << std::endl;
+    gnuFile_ << "set ylabel \"Y\"" << std::endl;
+    gnuFile_ << "set grid" << std::endl;
+    gnuFile_ << "plot \"" + outputFile_ + "\" title \"\" with points pt 7 " << std::endl;
 }
 
 #endif

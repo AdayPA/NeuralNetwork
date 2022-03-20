@@ -50,8 +50,8 @@ int main() {
         data.clear();
         data.seek();
     }
-      
+    data.draw();
     std::cout << std::endl << "Done" << std::endl;
-    system("start gnuplot -p gnuplot.txt");
+    system("start gnuplot -p ../pictures/gnuplot1.txt");
     return 0;
 }
