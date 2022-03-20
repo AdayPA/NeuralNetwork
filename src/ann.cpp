@@ -8,8 +8,7 @@
 #include <process.h>
 
 int main() {
-    Dataset data("../data/input/test.txt", "../data/output/");
-    // e.g., { 3, 2, 1 }
+    Dataset data("../data/input/xor.txt", "../data/output/");
     std::vector<unsigned> topology;
     data.getTopology(topology);
     unsigned total_lines = data.Count_lines("../data/input/test.txt");
@@ -18,30 +17,30 @@ int main() {
     int trainingPass = 0;
     double total_data = (total_lines - 1) / 2;
     pBar bar;
-    int Epoch = 3;
+    int total_training = 0;
+    int Epoch = 1;
     double increment =  100 / total_data;
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    start = std::chrono::system_clock::now();
     for (int i = 0; i < Epoch; i++) {
         auto epo = std::to_string(i);
         data.writeOutput("Epoch " + epo + "\n"); 
         while (!data.isEof()) {
+            ++total_training;
             ++trainingPass;
             auto s = std::to_string(trainingPass);
             data.writeOutput("Data " + s);
-            // Get new input data and feed it forward:
             if (data.getNextInputs(inputVals) != topology[0]) {
                 break;
             }
             data.writeEvolution(": Inputs:", inputVals);
             myNet.feedForward(inputVals);
-            // Collect the net's actual output results:
             myNet.getResults(resultVals);
             data.writeEvolution("Outputs:", resultVals);
-            // Train the net what the outputs should have been:
             data.getTargetOutputs(targetVals);
             data.writeEvolution("Targets:", targetVals);
             assert(targetVals.size() == topology.back());
             myNet.backProp(targetVals);
-            // Report how well the training is working, average over recent samples:
             data.writeOutputError(myNet.getRecentAverageError());
             // bar.update(increment);
             // bar.print();
@@ -50,8 +49,12 @@ int main() {
         data.clear();
         data.seek();
     }
+    end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end - start;
+    std::time_t end_time = std::chrono::system_clock::to_time_t(end);
     data.draw();
+    data.writeLogs(topology,myNet.getRecentAverageError(),elapsed_seconds.count(),total_training);
     std::cout << std::endl << "Done" << std::endl;
-    system("start gnuplot -p ../pictures/gnuplot1.txt");
+    system("start gnuplot -p ../pictures/gnuplot.txt");
     return 0;
 }

@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <ctime>
 #include <sstream>
+#include <cstring>
 
 #include "dataset.hpp"
 
@@ -20,7 +21,7 @@ Dataset::Dataset(const std::string input, const std::string folder) {
     outputFile_ = tempError;
     outfileError.open(tempError.c_str());
     outfileEvolution.open(tempEvo.c_str());
-    gnuFile_.open("../pictures/gnuplot1.txt");
+    gnuFile_.open("../pictures/gnuplot.txt");
     inputFile_ = input;
 }
 
@@ -122,7 +123,44 @@ void Dataset::draw(void) {
     gnuFile_ << "set xlabel \"X\"" << std::endl;
     gnuFile_ << "set ylabel \"Y\"" << std::endl;
     gnuFile_ << "set grid" << std::endl;
-    gnuFile_ << "plot \"" + outputFile_ + "\" title \"\" with points pt 7 " << std::endl;
+    gnuFile_ << "plot \"" + outputFile_ + "\" title \"\" with dots" << std::endl;
+}
+
+void Dataset::writeLogs(std::vector<unsigned> &topology, double error, double time, int &training) {
+    
+    std::vector<std::string> temp = Split(inputFile_, "/");
+    std::vector<std::string> temp2 = Split(temp.back(), ".");
+    std::string log_file = "../data/logs/" + temp2.front() + ".log";
+    const int n = log_file.length() + 1;
+    char filename[n];
+    std::strcpy(filename, log_file.c_str());
+    std::fstream appendFileToWorkWith;
+    appendFileToWorkWith.open(filename, std::fstream::in | std::fstream::out | std::fstream::app);
+    // If file does not exist, Create new file
+    if (!appendFileToWorkWith )  {
+        appendFileToWorkWith.open(filename,  std::fstream::in | std::fstream::out | std::fstream::trunc);
+    }     // use existing file
+    for (int i = 0; i < topology.size(); i++) {
+        appendFileToWorkWith << topology[i] << " ";
+    }
+    appendFileToWorkWith << error << " " << training << " " << time << "\n";
+    appendFileToWorkWith.close();
+}
+
+std::vector<std::string> Dataset::Split (std::string str, std::string delim) {
+  /// @brief this func split in 2 the string and store them in vector, 
+  //         depending of the char
+  std::vector<std::string> tokens;
+  size_t prev = 0, pos = 0;
+  do {
+    pos = str.find(delim, prev);
+    if (pos == std::string::npos) pos = str.length();
+    std::string token = str.substr(prev, pos-prev);
+    if (!token.empty()) tokens.push_back(token);
+    prev = pos + delim.length();
+  }
+  while (pos < str.length() && prev < str.length());
+  return tokens;
 }
 
 #endif

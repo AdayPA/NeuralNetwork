@@ -16,11 +16,13 @@ public:
     void writeEvolution(std::string, std::vector<double> &);
     void seek(void);
     void draw(void);
+    void writeLogs(std::vector<unsigned> &, double , double , int &);
     inline void clear(void) { m_trainingDataFile.clear(); }
     // Returns the number of input values read from the file:
-    unsigned getNextInputs(std::vector<double> &inputVals);
-    unsigned getTargetOutputs(std::vector<double> &targetOutputVals);
+    unsigned getNextInputs(std::vector<double> &);
+    unsigned getTargetOutputs(std::vector<double> &);
     unsigned Count_lines (const std::string);
+    std::vector<std::string> Split (std::string, std::string);
 
 private:
      std::ifstream m_trainingDataFile;
