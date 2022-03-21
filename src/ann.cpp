@@ -1,9 +1,5 @@
-#include <thread>
-
 #include "net.cpp"
-#include "neuron.cpp"
 #include "dataset.cpp"
-#include "pbar.cpp"
 
 int main() {
     Dataset data("../data/input/xor.txt", "../data/output/");
@@ -12,5 +8,6 @@ int main() {
     Net myNet(topology);
     int Epoch = 1;
     data.trainNN(Epoch, myNet, topology);
+    data.trainNN(Epoch, myNet, topology, "../data/input/topology.txt");
     return 0;
 }

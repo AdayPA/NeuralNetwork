@@ -15,6 +15,19 @@ Net::Net(const std::vector<unsigned> &topology) {
   }
 }
 
+void Net::setTopology(const std::vector<unsigned> &topology) {
+  m_layers_.clear();
+  unsigned numLayers = topology.size();
+  for (unsigned layerNum = 0; layerNum < numLayers; layerNum++) {
+    m_layers_.push_back(Layer{});
+    unsigned numOutputs = layerNum == topology.size() - 1 ? 0 : topology[layerNum + 1];
+    for (unsigned neuronNum = 0; neuronNum <= topology[layerNum]; neuronNum++) {
+      m_layers_.back().push_back(Neuron(numOutputs, neuronNum));
+    }
+    m_layers_.back().back().setOutputVal(1.0);
+  }
+}
+
 void Net::feedForward(const std::vector<double> &inputVals) {
   assert(inputVals.size() == m_layers_[0].size() - 1);
   for (unsigned i = 0; i < inputVals.size(); i++) {

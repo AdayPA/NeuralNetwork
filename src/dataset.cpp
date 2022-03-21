@@ -11,6 +11,8 @@
 #include <chrono>
 
 #include "dataset.hpp"
+#include "pbar.cpp"
+#include "neuron.cpp"
 
 Dataset::Dataset(const std::string input, const std::string folder) {
     auto t = std::time(nullptr);
@@ -51,6 +53,37 @@ void Dataset::getTopology(std::vector<unsigned> &topology) {
     std::string line;
     std::string label;
     getline(m_trainingDataFile, line);
+    std::stringstream ss(line);
+    ss >> label;
+    if (this->isEof() || label.compare("topology:") != 0) {
+        abort();
+    }
+    while (!ss.eof()) {
+        unsigned n;
+        ss >> n;
+        topology.push_back(n);
+    }
+    return;
+}
+
+std::string Dataset::Get_line(const std::string& filename, const int& line_number) {
+  std::ifstream inputfile(filename);
+  auto temp(1);
+  std::string line;
+  while( (!(inputfile.eof())) && (temp < line_number)) {
+    std::getline(inputfile, line);
+    ++temp;
+  } 
+  std::getline(inputfile, line);
+  return line;
+}
+
+void Dataset::addTopology(std::vector<unsigned> &topology, const std::string topology_file) {
+    std::string line;
+    std::string label;
+    std::ifstream temp_topology;
+    temp_topology.open(topology_file.c_str());
+    getline(temp_topology, line);
     std::stringstream ss(line);
     ss >> label;
     if (this->isEof() || label.compare("topology:") != 0) {
@@ -131,7 +164,6 @@ void Dataset::draw(void) {
 }
 
 void Dataset::writeLogs(std::vector<unsigned> &topology, double error, double time, int &training) {
-    
     std::vector<std::string> temp = Split(inputFile_, "/");
     std::vector<std::string> temp2 = Split(temp.back(), ".");
     std::string log_file = "../data/logs/" + temp2.front() + ".log";
@@ -147,8 +179,33 @@ void Dataset::writeLogs(std::vector<unsigned> &topology, double error, double ti
     for (int i = 0; i < topology.size(); i++) {
         appendFileToWorkWith << topology[i] << " ";
     }
+    topology.clear();
     appendFileToWorkWith << " | " << error << " | " << training << " | " << time << " | " << nameOutputFile_ <<"\n";
     appendFileToWorkWith.close();
+}
+
+void Dataset::trainNN(unsigned epoch, Net &myNet, std::vector<unsigned> &topology, const std::string topology_file) {
+    unsigned topology_counter = Count_lines(topology_file);
+    std::vector<unsigned> topology_new;
+    std::string line;
+    std::string label;
+    std::ifstream temp_topology;
+    temp_topology.open(topology_file.c_str());
+    for (int i = 0; i < topology_counter; i++) {
+        getline(temp_topology, line);
+        std::stringstream ss(line);
+        ss >> label;
+        if (this->isEof() || label.compare("topology:") != 0) {
+            abort();
+        }
+        while (!ss.eof()) {
+            unsigned n;
+            ss >> n;
+            topology_new.push_back(n);
+        }
+        trainNN(epoch, myNet, topology_new);
+        topology_new.clear();
+    }
 }
 
 void Dataset::trainNN(unsigned epoch, Net &myNet, std::vector<unsigned> &topology) {
