@@ -31,10 +31,13 @@ public:
     std::string Get_line (const std::string&, const int&);
 
 private:
+    void drawLogs(void);
+
      std::ifstream m_trainingDataFile;
      std::ofstream outfileError;
      std::ofstream outfileEvolution;
      std::ofstream gnuFile_;
+     std::ofstream gnuLogFile_;
      std::string outputFile_;
      std::string inputFile_;
      std::string nameOutputFile_;

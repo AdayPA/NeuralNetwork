@@ -21,12 +21,13 @@ Dataset::Dataset(const std::string input, const std::string folder) {
     oss << std::put_time(&tm, "%d-%m-%Y_%H-%M-%S");
     auto str = oss.str();
     m_trainingDataFile.open(input.c_str());
-    std::string tempError = folder + "AverageError_" + str + ".txt";
-    std::string tempEvo = folder + "Evolution_" + str + ".txt";
+    std::string tempError = folder + "data/AverageError_" + str + ".txt";
+    std::string tempEvo = folder + "data/Evolution_" + str + ".txt";
     nameOutputFile_ = "AverageError_" + str + ".txt";
     outputFile_ = tempError;
     outfileError.open(tempError.c_str());
     outfileEvolution.open(tempEvo.c_str());
+    gnuLogFile_.open("../data/output/pictures/gnulogplot.txt");
     gnuFile_.open("../data/output/pictures/gnuplot.txt");
     inputFile_ = input;
 }
@@ -252,6 +253,7 @@ void Dataset::logResults(void) {
     std::ifstream temp_topology;
     temp_topology.open("../data/output/logs/xor.log");
     std::string line;
+    std::vector<std::string> clear_space;
     std::vector<std::string> temp = Split(inputFile_, "/");
     std::vector<std::string> temp2 = Split(temp.back(), ".");
     std::string log_file = "../data/output/logs/" + temp2.front() + ".dat";
@@ -263,18 +265,32 @@ void Dataset::logResults(void) {
     if (!appendFileToWorkWith )  {
         appendFileToWorkWith.open(filename,  std::fstream::in | std::fstream::out | std::fstream::trunc);
     }     
-    std::cout << Count_lines("../data/output/logs/xor.log");
     for (int i = 0; i < Count_lines("../data/output/logs/xor.log"); i++) {
         getline(temp_topology,line);
         std::vector<std::string> temp_1 = Split(line, "|");
         std::vector<std::string> temp2_1 = Split(temp_1.front(), " ");
-        appendFileToWorkWith << temp_1[1] << " " << temp_1[3] << " " << temp_1[2] << " ";
+        appendFileToWorkWith << temp_1[3] << temp_1[1];
         for (int j = 0; j < temp2_1.size() - 1; j++) {
             appendFileToWorkWith << temp2_1[j] << "-";
         }
-        appendFileToWorkWith << temp2_1.back() << "\n";
+        clear_space = Split(temp_1[2], " ");
+        appendFileToWorkWith << temp2_1.back() << "-" << clear_space[0]<< "\n";
+        clear_space.clear();
     }
     appendFileToWorkWith.close();
+    //drawLogs();
+    //system("start gnuplot -p ../data/output/pictures/gnulogplot.txt");
+}
+
+void Dataset::drawLogs(void) {
+    gnuLogFile_ << "set terminal pngcairo enhanced font \"arial,10\" fontscale 1.0 size 1080,500" << std::endl;
+    gnuLogFile_ << "set output '../data/output/" + nameOutputFile_ + ".png'" << std::endl;
+    gnuLogFile_ << "reset" << std::endl;
+    gnuLogFile_ << "set title \"" + nameOutputFile_ + "\"" << std::endl;
+    gnuLogFile_ << "set xlabel \"Time\"" << std::endl;
+    gnuLogFile_ << "set ylabel \"Error\"" << std::endl;
+    gnuLogFile_ << "set grid" << std::endl;
+    gnuLogFile_ << "plot 'xor.dat' w point pt 7, '' with labels center offset 3.4,.5 notitle" << std::endl;
 }
 
 std::vector<std::string> Dataset::Split (std::string str, std::string delim) {
