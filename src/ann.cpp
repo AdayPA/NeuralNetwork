@@ -9,5 +9,6 @@ int main() {
     int Epoch = 1;
     data.trainNN(Epoch, myNet, topology);
     data.trainNN(Epoch, myNet, topology, "../data/input/topology.txt");
+    data.logResults();
     return 0;
 }

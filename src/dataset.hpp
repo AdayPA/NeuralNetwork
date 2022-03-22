@@ -22,6 +22,7 @@ public:
     void trainNN(unsigned, Net &, std::vector<unsigned> &);
     void trainNN(unsigned, Net &, std::vector<unsigned> &, const std::string);
     void writeLogs(std::vector<unsigned> &, double , double , int &);
+    void logResults(void);
     inline void clear(void) { m_trainingDataFile.clear(); }
     unsigned getNextInputs(std::vector<double> &);
     unsigned getTargetOutputs(std::vector<double> &);

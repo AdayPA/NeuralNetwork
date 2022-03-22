@@ -27,7 +27,7 @@ Dataset::Dataset(const std::string input, const std::string folder) {
     outputFile_ = tempError;
     outfileError.open(tempError.c_str());
     outfileEvolution.open(tempEvo.c_str());
-    gnuFile_.open("../pictures/gnuplot.txt");
+    gnuFile_.open("../data/output/pictures/gnuplot.txt");
     inputFile_ = input;
 }
 
@@ -153,20 +153,20 @@ void Dataset::draw(void) {
     int total_lines = Count_lines(outputFile_);
     auto lines = std::to_string(total_lines + (total_lines * 5 / 100));
     gnuFile_ << "set terminal pngcairo enhanced font \"arial,10\" fontscale 1.0 size 1080,500" << std::endl;
-    gnuFile_ << "set output '../pictures/" + nameOutputFile_ + ".png'" << std::endl;
+    gnuFile_ << "set output '../data/output/pictures/" + nameOutputFile_ + ".png'" << std::endl;
     gnuFile_ << "reset" << std::endl;
     gnuFile_ << "set xrange [0:"+ lines +"]" << std::endl;
     gnuFile_ << "set title \"" + nameOutputFile_ + "\"" << std::endl;
     gnuFile_ << "set xlabel \"X\"" << std::endl;
     gnuFile_ << "set ylabel \"Y\"" << std::endl;
     gnuFile_ << "set grid" << std::endl;
-    gnuFile_ << "plot \"" + outputFile_ + "\" title \"\" with dots" << std::endl;
+    gnuFile_ << "plot \"" + outputFile_ + "\" title \"\" with line" << std::endl;
 }
 
 void Dataset::writeLogs(std::vector<unsigned> &topology, double error, double time, int &training) {
     std::vector<std::string> temp = Split(inputFile_, "/");
     std::vector<std::string> temp2 = Split(temp.back(), ".");
-    std::string log_file = "../data/logs/" + temp2.front() + ".log";
+    std::string log_file = "../data/output/logs/" + temp2.front() + ".log";
     const int n = log_file.length() + 1;
     char filename[n];
     std::strcpy(filename, log_file.c_str());
@@ -181,6 +181,7 @@ void Dataset::writeLogs(std::vector<unsigned> &topology, double error, double ti
     }
     topology.clear();
     appendFileToWorkWith << " | " << error << " | " << training << " | " << time << " | " << nameOutputFile_ <<"\n";
+    appendFileToWorkWith.close();
     appendFileToWorkWith.close();
 }
 
@@ -238,14 +239,42 @@ void Dataset::trainNN(unsigned epoch, Net &myNet, std::vector<unsigned> &topolog
         trainingPass = 0;
         clear();
         seek();
-
     }
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end - start;
     std::time_t end_time = std::chrono::system_clock::to_time_t(end);
     draw();
     writeLogs(topology,myNet.getRecentAverageError(),elapsed_seconds.count(),total_training);
-    system("start gnuplot -p ../pictures/gnuplot.txt");
+    system("start gnuplot -p ../data/output/pictures/gnuplot.txt");
+}
+
+void Dataset::logResults(void) {
+    std::ifstream temp_topology;
+    temp_topology.open("../data/output/logs/xor.log");
+    std::string line;
+    std::vector<std::string> temp = Split(inputFile_, "/");
+    std::vector<std::string> temp2 = Split(temp.back(), ".");
+    std::string log_file = "../data/output/logs/" + temp2.front() + ".dat";
+    const int n = log_file.length() + 1;
+    char filename[n];
+    std::strcpy(filename, log_file.c_str());
+    std::fstream appendFileToWorkWith;
+    appendFileToWorkWith.open(filename, std::fstream::in | std::fstream::out | std::fstream::app);
+    if (!appendFileToWorkWith )  {
+        appendFileToWorkWith.open(filename,  std::fstream::in | std::fstream::out | std::fstream::trunc);
+    }     
+    std::cout << Count_lines("../data/output/logs/xor.log");
+    for (int i = 0; i < Count_lines("../data/output/logs/xor.log"); i++) {
+        getline(temp_topology,line);
+        std::vector<std::string> temp_1 = Split(line, "|");
+        std::vector<std::string> temp2_1 = Split(temp_1.front(), " ");
+        appendFileToWorkWith << temp_1[1] << " " << temp_1[3] << " " << temp_1[2] << " ";
+        for (int j = 0; j < temp2_1.size() - 1; j++) {
+            appendFileToWorkWith << temp2_1[j] << "-";
+        }
+        appendFileToWorkWith << temp2_1.back() << "\n";
+    }
+    appendFileToWorkWith.close();
 }
 
 std::vector<std::string> Dataset::Split (std::string str, std::string delim) {
