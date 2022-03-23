@@ -9,6 +9,7 @@
 
 class Dataset {
 public:
+    Dataset(const std::string, const std::string, const std::string, int);
     Dataset(const std::string, const std::string );
     ~Dataset();
     bool isEof(void) { return m_trainingDataFile.eof(); }
@@ -23,6 +24,7 @@ public:
     void trainNN(unsigned, Net &, std::vector<unsigned> &, const std::string);
     void writeLogs(std::vector<unsigned> &, double , double , int &);
     void logResults(void);
+    void test(void);
     inline void clear(void) { m_trainingDataFile.clear(); }
     unsigned getNextInputs(std::vector<double> &);
     unsigned getTargetOutputs(std::vector<double> &);

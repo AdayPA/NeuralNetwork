@@ -13,6 +13,37 @@
 #include "dataset.hpp"
 #include "pbar.cpp"
 #include "neuron.cpp"
+#include "net.cpp"
+
+Dataset::Dataset (const std::string input_file, const std::string output_file, const std::string topology_file, int Epoch) {
+    std::vector<unsigned> topology;
+    std::ostringstream oss;
+    unsigned topology_count = Count_lines(topology_file);
+    m_trainingDataFile.open(topology_file.c_str());
+    for (int i = 0; i < Epoch; i++) {
+        for (int j = 0; j < topology_count; j++) {
+            oss.clear();
+            auto t = std::time(nullptr);
+            auto tm = *std::localtime(&t);
+            oss << std::put_time(&tm, "%d-%m-%Y_%H-%M-%S");
+            auto str = oss.str();
+            std::string tempError = output_file + "data/AverageError_" + str + ".txt";
+            std::string tempEvo = output_file + "data/Evolution_" + str + ".txt";
+            outfileError.open(tempError.c_str());
+            outfileEvolution.open(tempEvo.c_str());
+            getTopology(topology);
+            Net myNet(topology);
+            trainNN(i, myNet, topology);
+            logResults();
+            //std::cout << topology[1] << "\n";
+            topology.clear();
+            outfileError.close();
+            outfileEvolution.close();
+        }
+
+    }
+}
+
 
 Dataset::Dataset(const std::string input, const std::string folder) {
     auto t = std::time(nullptr);
