@@ -26,6 +26,7 @@ private:
     void getData(void);
     void trainNN(std::vector<unsigned>&, int, int);
     void drawData(std::string &);
+    void drawLogs(void);
     std::fstream createDataFile(std::vector<unsigned>&, int);
 
     std::vector<std::vector<unsigned>> topology_;
@@ -35,6 +36,7 @@ private:
     std::ifstream topologyFile_;
     std::string outputDataNameFile_;
     std::string outputLogFile_;
+    std::string outputLogNameFile_;
     std::string topologyNameFile_;
     std::string inputDataNameFile_;
     std::string outputPictures_;

@@ -37,7 +37,38 @@ Dataset::Dataset (  const std::string input_data,
         trainNN(topology_[i], Epoch, i);
     }
     writeLogs();
+    drawLogs();
 }
+
+void Dataset::drawLogs(void) {
+    std::vector<std::string> temp = Split(outputLogNameFile_, "/");
+    temp = Split(temp.back(), ".");
+    std::string log_draw = outputLogFile_ + temp[0] + ".txt";
+    const int n = log_draw.length() + 1;
+    char filename[n];
+    std::strcpy(filename, log_draw.c_str());
+    std::fstream appendFileToWorkWith;
+    appendFileToWorkWith.open(filename, std::fstream::in | std::fstream::out | std::fstream::app);
+    if (!appendFileToWorkWith )  {
+        appendFileToWorkWith.open(filename,  std::fstream::in | std::fstream::out | std::fstream::trunc);
+    }
+    
+    appendFileToWorkWith << "set terminal pngcairo enhanced font \"arial,10\" fontscale 1.0 size 1080,500" << std::endl;
+    appendFileToWorkWith << "set output '"+ outputPictures_ + temp[0] + ".png'" << std::endl;
+    appendFileToWorkWith << "reset" << std::endl;
+    appendFileToWorkWith << "set title \"" + temp[0] + "\"" << std::endl;
+    appendFileToWorkWith << "set xlabel \"Time\"" << std::endl;
+    appendFileToWorkWith << "set ylabel \"Error\"" << std::endl;
+    appendFileToWorkWith << "set grid" << std::endl;
+    appendFileToWorkWith << "plot '" + outputLogNameFile_ +"' w point pt 7, '' with labels center offset 3.4,.5 notitle" << std::endl;
+
+    std::string temppp = "start gnuplot -p " + log_draw + "&";
+    const char * plot = temppp.c_str();
+    system(plot);
+    appendFileToWorkWith.close();
+    remove(filename);
+}
+
 
 void Dataset::trainNN(std::vector<unsigned> &topology, int epoch, int index) {
     Net mynet(topology);
@@ -68,7 +99,7 @@ void Dataset::drawData(std::string &file) {
     delete_files_.push_back(gnufile);
     const int n = gnufile.length() + 1;
     char filename[n];
-    //std::strcpy(filename, gnufile.c_str());
+    std::strcpy(filename, gnufile.c_str());
     std::fstream appendFileToWorkWith;
     appendFileToWorkWith.open(filename, std::fstream::in | std::fstream::out | std::fstream::app);
     if (!appendFileToWorkWith )  {
@@ -89,9 +120,6 @@ void Dataset::drawData(std::string &file) {
     const char * plot = temppp.c_str();
     system(plot);
     appendFileToWorkWith.close();
-    if(appendFileToWorkWith.is_open()) {
-        std::cout << "zz";
-    }
     remove(filename);
 }
 
@@ -124,6 +152,7 @@ void Dataset::writeLogs(void) {
     std::vector<std::string> temp = Split(inputDataNameFile_, "/");
     std::vector<std::string> temp2 = Split(temp.back(), ".");
     std::string log_file = outputLogFile_ + temp2.front() + ".log";
+    outputLogNameFile_ = log_file;
     const int n = log_file.length() + 1;
     char filename[n];
     std::strcpy(filename, log_file.c_str());
@@ -133,7 +162,7 @@ void Dataset::writeLogs(void) {
         logFile.open(filename,  std::fstream::in | std::fstream::out | std::fstream::trunc);
     }
     for (int i = 0; i < logs_.size(); i++) {
-        logFile << logs_[i][1] << " "  << logs_[i][2] << " " << logs_[i][3] << " "  << logs_[i][0] << "\n";
+        logFile << logs_[i][3] << " "  << logs_[i][2] << " " << logs_[i][1] << " "  << logs_[i][0] << "\n";
     }
     logFile.close();
 }
@@ -198,20 +227,6 @@ unsigned Dataset::Count_lines (const std::string file) {
     return lines;
 }
 /*
-void Dataset::draw(void) {
-    int total_lines = Count_lines(outputFile_);
-    auto lines = std::to_string(total_lines + (total_lines * 5 / 100));
-    appendFileToWorkWith << "set terminal pngcairo enhanced font \"arial,10\" fontscale 1.0 size 1080,500" << std::endl;
-    appendFileToWorkWith << "set output '../data/output/pictures/" + nameOutputFile_ + ".png'" << std::endl;
-    appendFileToWorkWith << "reset" << std::endl;
-    appendFileToWorkWith << "set xrange [0:"+ lines +"]" << std::endl;
-    appendFileToWorkWith << "set title \"" + nameOutputFile_ + "\"" << std::endl;
-    appendFileToWorkWith << "set xlabel \"X\"" << std::endl;
-    appendFileToWorkWith << "set ylabel \"Y\"" << std::endl;
-    appendFileToWorkWith << "set grid" << std::endl;
-    appendFileToWorkWith << "plot \"" + outputFile_ + "\" title \"\" with line" << std::endl;
-}
-
 void Dataset::logResults(void) {
     std::ifstream temp_topology;
     temp_topology.open("../data/output/logs/xor.log");
