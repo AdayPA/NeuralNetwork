@@ -13,13 +13,7 @@ public:
     Dataset(const std::string, const std::string, const std::string, const std::string, const std::string, int);
     ~Dataset();
     
-    void writeLogs(void);
-    void logResults(void);
-    void getNextInputs(std::vector<double> &);
-    unsigned getTargetOutputs(std::vector<double> &);
-    unsigned Count_lines (const std::string);
-    std::vector<std::string> Split (std::string, std::string);
-    std::string Get_line (const std::string&, const int&);
+    std::vector<double> getOutput(std::vector<double> &);
 
 private:
     void getTopology(void);
@@ -27,7 +21,11 @@ private:
     void trainNN(std::vector<unsigned>&, int, int);
     void drawData(std::string &);
     void drawLogs(void);
+    void writeLogs(void);
+    unsigned Count_lines (const std::string);
     std::fstream createDataFile(std::vector<unsigned>&, int);
+    std::string Get_line (const std::string&, const int&);
+    std::vector<std::string> Split (std::string, std::string);
 
     std::vector<std::vector<unsigned>> topology_;
     std::vector<Tensor> data_;
@@ -41,16 +39,8 @@ private:
     std::string inputDataNameFile_;
     std::string outputPictures_;
     std::ifstream inputDataFile_;
-
-
-    std::ofstream outfileError;
-    std::ofstream outfileEvolution;
-    std::ofstream gnuLogFile_;
-    std::string outputFile_;
-    std::string inputFile_;
-
-
-    
+   
+    std::vector<Net> nn_;
 };
 
 #endif

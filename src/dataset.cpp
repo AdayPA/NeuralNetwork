@@ -40,6 +40,13 @@ Dataset::Dataset (  const std::string input_data,
     drawLogs();
 }
 
+std::vector<double>  Dataset::getOutput(std::vector<double> & input) {
+    std::vector<double> output;
+    nn_[0].feedForward(input);
+    nn_[0].getResults(output);
+    return output;
+}
+
 void Dataset::drawLogs(void) {
     std::vector<std::string> temp = Split(outputLogNameFile_, "/");
     temp = Split(temp.back(), ".");
@@ -52,7 +59,9 @@ void Dataset::drawLogs(void) {
     if (!appendFileToWorkWith )  {
         appendFileToWorkWith.open(filename,  std::fstream::in | std::fstream::out | std::fstream::trunc);
     }
-    
+    std::ofstream ofs;
+    ofs.open(filename, std::ofstream::out | std::ofstream::trunc);
+    ofs.close();
     appendFileToWorkWith << "set terminal pngcairo enhanced font \"arial,10\" fontscale 1.0 size 1080,500" << std::endl;
     appendFileToWorkWith << "set output '"+ outputPictures_ + temp[0] + ".png'" << std::endl;
     appendFileToWorkWith << "reset" << std::endl;
@@ -61,7 +70,6 @@ void Dataset::drawLogs(void) {
     appendFileToWorkWith << "set ylabel \"Error\"" << std::endl;
     appendFileToWorkWith << "set grid" << std::endl;
     appendFileToWorkWith << "plot '" + outputLogNameFile_ +"' w point pt 7, '' with labels center offset 3.4,.5 notitle" << std::endl;
-
     std::string temppp = "start gnuplot -p " + log_draw + "&";
     const char * plot = temppp.c_str();
     system(plot);
@@ -90,6 +98,7 @@ void Dataset::trainNN(std::vector<unsigned> &topology, int epoch, int index) {
     logs_[index].push_back(std::to_string(mynet.getRecentAverageError()));
     logs_[index].push_back(std::to_string(elapsed_seconds.count()));
     drawData(logs_[index][0]);
+    nn_.push_back(mynet);
 }
 
 void Dataset::drawData(std::string &file) {
@@ -226,51 +235,7 @@ unsigned Dataset::Count_lines (const std::string file) {
     }
     return lines;
 }
-/*
-void Dataset::logResults(void) {
-    std::ifstream temp_topology;
-    temp_topology.open("../data/output/logs/xor.log");
-    std::string line;
-    std::vector<std::string> clear_space;
-    std::vector<std::string> temp = Split(inputFile_, "/");
-    std::vector<std::string> temp2 = Split(temp.back(), ".");
-    std::string log_file = "../data/output/logs/" + temp2.front() + ".dat";
-    const int n = log_file.length() + 1;
-    char filename[n];
-    std::strcpy(filename, log_file.c_str());
-    std::fstream appendFileToWorkWith;
-    appendFileToWorkWith.open(filename, std::fstream::in | std::fstream::out | std::fstream::app);
-    if (!appendFileToWorkWith )  {
-        appendFileToWorkWith.open(filename,  std::fstream::in | std::fstream::out | std::fstream::trunc);
-    }     
-    for (int i = 0; i < Count_lines("../data/output/logs/xor.log"); i++) {
-        getline(temp_topology,line);
-        std::vector<std::string> temp_1 = Split(line, "|");
-        std::vector<std::string> temp2_1 = Split(temp_1.front(), " ");
-        appendFileToWorkWith << temp_1[3] << temp_1[1];
-        for (int j = 0; j < temp2_1.size() - 1; j++) {
-            appendFileToWorkWith << temp2_1[j] << "-";
-        }
-        clear_space = Split(temp_1[2], " ");
-        appendFileToWorkWith << temp2_1.back() << "-" << clear_space[0]<< "\n";
-        clear_space.clear();
-    }
-    appendFileToWorkWith.close();
-    //drawLogs();
-    //system("start gnuplot -p ../data/output/pictures/gnulogplot.txt");
-}
 
-void Dataset::drawLogs(void) {
-    gnuLogFile_ << "set terminal pngcairo enhanced font \"arial,10\" fontscale 1.0 size 1080,500" << std::endl;
-    gnuLogFile_ << "set output '../data/output/" + nameOutputFile_ + ".png'" << std::endl;
-    gnuLogFile_ << "reset" << std::endl;
-    gnuLogFile_ << "set title \"" + nameOutputFile_ + "\"" << std::endl;
-    gnuLogFile_ << "set xlabel \"Time\"" << std::endl;
-    gnuLogFile_ << "set ylabel \"Error\"" << std::endl;
-    gnuLogFile_ << "set grid" << std::endl;
-    gnuLogFile_ << "plot 'xor.dat' w point pt 7, '' with labels center offset 3.4,.5 notitle" << std::endl;
-}
-*/
 std::vector<std::string> Dataset::Split (std::string str, std::string delim) {
   /// @brief this func split in 2 the string and store them in vector, 
   //         depending of the char
