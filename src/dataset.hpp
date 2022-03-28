@@ -13,17 +13,17 @@ public:
     Dataset(const std::string, const std::string, const std::string, const std::string, const std::string, int);
     ~Dataset();
     
-    std::vector<double> getOutput(std::vector<double> &);
+    std::vector<double> getOutput(const std::vector<double> &);
 
 private:
     void getTopology(void);
     void getData(void);
-    void trainNN(std::vector<unsigned>&, int, int);
-    void drawData(std::string &);
+    void trainNN(const std::vector<unsigned>&, int, int);
+    void drawData(const std::string &);
     void drawLogs(void);
     void writeLogs(void);
-    unsigned Count_lines (const std::string);
-    std::fstream createDataFile(std::vector<unsigned>&, int);
+    unsigned Count_lines (const std::string &);
+    std::fstream createDataFile(const std::vector<unsigned>&, int);
     std::string Get_line (const std::string&, const int&);
     std::vector<std::string> Split (std::string, std::string);
 

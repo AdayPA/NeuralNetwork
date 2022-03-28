@@ -5,8 +5,6 @@
 #include <cstdlib>
 #include <cmath>
 
-#include "net.hpp"
-
 class Neuron;
 
 typedef std::vector<Neuron> Layer;

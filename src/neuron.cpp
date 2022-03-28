@@ -8,9 +8,12 @@ double Neuron::alpha = 0.5;
 
 Neuron::Neuron(unsigned numOutputs, unsigned myIndex) {
   m_myIndex_ = myIndex;
+  m_outputVal_ = 0.0;
+  m_gradient_ = 0.0;
   for (unsigned c = 0; c < numOutputs; c++) {
     m_outputWeights_.push_back(Connection());
     m_outputWeights_.back().weight = randomWeight();
+    m_outputWeights_.back().deltaWeight = 0.0;
   }
 }
 

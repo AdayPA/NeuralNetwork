@@ -2,12 +2,8 @@
 #define NET_HPP_
 
 #include <vector>
-#include <iostream>
-#include <cassert>
 
-#include "neuron.cpp"
-
-typedef std::vector<Neuron> Layer;
+#include "neuron.hpp"
 
 class Net {
   public:
@@ -20,8 +16,8 @@ class Net {
   private:
     std::vector<Layer> m_layers_; // m_layers_[layerNum][neuronNum]
     double m_error_;
-    double m_recentAverageError_;
-    double m_recentAverageSmoothingFactor_;
+    double m_recentAverageError_ = 0.0;
+    double m_recentAverageSmoothingFactor_ = 100.0;
 };
 
 #endif

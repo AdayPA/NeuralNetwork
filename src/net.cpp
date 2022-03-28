@@ -1,22 +1,21 @@
 #ifndef NET_CPP_
 #define NET_CPP_
 
+#include <cassert>
+#include <cmath>
+
 #include "net.hpp"
 
-Net::Net(const std::vector<unsigned> &topology) {
-  unsigned numLayers = topology.size();
-  for (unsigned layerNum = 0; layerNum < numLayers; layerNum++) {
-    m_layers_.push_back(Layer{});
-    unsigned numOutputs = layerNum == topology.size() - 1 ? 0 : topology[layerNum + 1];
-    for (unsigned neuronNum = 0; neuronNum <= topology[layerNum]; neuronNum++) {
-      m_layers_.back().push_back(Neuron(numOutputs, neuronNum));
-    }
-    m_layers_.back().back().setOutputVal(1.0);
-  }
+Net::Net(const std::vector<unsigned> &topology)
+  : m_error_(0.0), m_recentAverageError_(0.0), m_recentAverageSmoothingFactor_(100.0) {
+  setTopology(topology);
 }
 
 void Net::setTopology(const std::vector<unsigned> &topology) {
+  assert(!topology.empty());
   m_layers_.clear();
+  m_error_ = 0.0;
+  m_recentAverageError_ = 0.0;
   unsigned numLayers = topology.size();
   for (unsigned layerNum = 0; layerNum < numLayers; layerNum++) {
     m_layers_.push_back(Layer{});
@@ -29,6 +28,7 @@ void Net::setTopology(const std::vector<unsigned> &topology) {
 }
 
 void Net::feedForward(const std::vector<double> &inputVals) {
+  assert(!m_layers_.empty());
   assert(inputVals.size() == m_layers_[0].size() - 1);
   for (unsigned i = 0; i < inputVals.size(); i++) {
     m_layers_[0][i].setOutputVal(inputVals[i]);
@@ -44,13 +44,15 @@ void Net::feedForward(const std::vector<double> &inputVals) {
 void Net::backProp(const std::vector<double> &targetVals) {
   // RMS
   Layer &outputLayer = m_layers_.back();
+  assert(outputLayer.size() > 1);
+  assert(targetVals.size() == outputLayer.size() - 1);
   m_error_ = 0.0;
   for (unsigned n = 0; n < outputLayer.size() - 1; n++) {
     double delta = targetVals[n] - outputLayer[n].getOutputVal();
     m_error_ += delta * delta;
   }
   m_error_ /= outputLayer.size() - 1;
-  m_error_ = sqrt(m_error_);
+  m_error_ = std::sqrt(m_error_);
   m_recentAverageError_ = (m_recentAverageError_ * m_recentAverageSmoothingFactor_ + m_error_) / (m_recentAverageSmoothingFactor_ + 1.0);
   for (unsigned n = 0; n < outputLayer.size() - 1; n++) {
     outputLayer[n].calcOutputGradients(targetVals[n]);
