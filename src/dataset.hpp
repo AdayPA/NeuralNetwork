@@ -6,38 +6,41 @@
 #include <sstream>
 
 #include "net.hpp"
+#include "tensor.hpp"
 
 class Dataset {
 public:
-    Dataset(const std::string, const std::string );
+    Dataset(const std::string, const std::string, const std::string, const std::string, const std::string, int);
     ~Dataset();
-    bool isEof(void) { return m_trainingDataFile.eof(); }
-    void getTopology(std::vector<unsigned> &);
-    void addTopology(std::vector<unsigned> &, const std::string);
-    void writeOutputError(const double);
-    void writeOutput(std::string);
-    void writeEvolution(std::string, std::vector<double> &);
-    void seek(void);
-    void draw(void);
-    void trainNN(unsigned, Net &, std::vector<unsigned> &);
-    void trainNN(unsigned, Net &, std::vector<unsigned> &, const std::string);
-    void writeLogs(std::vector<unsigned> &, double , double , int &);
-    void logResults(void);
-    inline void clear(void) { m_trainingDataFile.clear(); }
-    unsigned getNextInputs(std::vector<double> &);
-    unsigned getTargetOutputs(std::vector<double> &);
-    unsigned Count_lines (const std::string);
-    std::vector<std::string> Split (std::string, std::string);
-    std::string Get_line (const std::string&, const int&);
+    
+    std::vector<double> getOutput(std::vector<double> &);
 
 private:
-     std::ifstream m_trainingDataFile;
-     std::ofstream outfileError;
-     std::ofstream outfileEvolution;
-     std::ofstream gnuFile_;
-     std::string outputFile_;
-     std::string inputFile_;
-     std::string nameOutputFile_;
+    void getTopology(void);
+    void getData(void);
+    void trainNN(std::vector<unsigned>&, int, int);
+    void drawData(std::string &);
+    void drawLogs(void);
+    void writeLogs(void);
+    unsigned Count_lines (const std::string);
+    std::fstream createDataFile(std::vector<unsigned>&, int);
+    std::string Get_line (const std::string&, const int&);
+    std::vector<std::string> Split (std::string, std::string);
+
+    std::vector<std::vector<unsigned>> topology_;
+    std::vector<Tensor> data_;
+    std::vector<std::vector<std::string>> logs_;
+    std::vector<std::string> delete_files_;
+    std::ifstream topologyFile_;
+    std::string outputDataNameFile_;
+    std::string outputLogFile_;
+    std::string outputLogNameFile_;
+    std::string topologyNameFile_;
+    std::string inputDataNameFile_;
+    std::string outputPictures_;
+    std::ifstream inputDataFile_;
+   
+    std::vector<Net> nn_;
 };
 
 #endif
