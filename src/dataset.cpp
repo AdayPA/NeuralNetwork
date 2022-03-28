@@ -1,101 +1,179 @@
 #ifndef DATASET_CPP_
 #define DATASET_CPP_
 
+#include <unistd.h>
 #include <process.h>
 
 #include <iomanip>
 #include <ctime>
 #include <sstream>
 #include <cstring>
+#include <string>
 #include <cassert>
 #include <chrono>
+#include <cstdio>
 
 #include "dataset.hpp"
 #include "pbar.cpp"
 #include "neuron.cpp"
 #include "net.cpp"
 
-Dataset::Dataset (const std::string input_file, const std::string output_file, const std::string topology_file, int Epoch) {
-    std::vector<unsigned> topology;
-    std::ostringstream oss;
-    unsigned topology_count = Count_lines(topology_file);
-    m_trainingDataFile.open(topology_file.c_str());
-    for (int i = 0; i < Epoch; i++) {
-        for (int j = 0; j < topology_count; j++) {
-            oss.clear();
-            auto t = std::time(nullptr);
-            auto tm = *std::localtime(&t);
-            oss << std::put_time(&tm, "%d-%m-%Y_%H-%M-%S");
-            auto str = oss.str();
-            std::string tempError = output_file + "data/AverageError_" + str + ".txt";
-            std::string tempEvo = output_file + "data/Evolution_" + str + ".txt";
-            outfileError.open(tempError.c_str());
-            outfileEvolution.open(tempEvo.c_str());
-            getTopology(topology);
-            Net myNet(topology);
-            trainNN(i, myNet, topology);
-            logResults();
-            //std::cout << topology[1] << "\n";
-            topology.clear();
-            outfileError.close();
-            outfileEvolution.close();
-        }
-
+Dataset::Dataset (  const std::string input_data, 
+                    const std::string input_topology, 
+                    const std::string output_data,
+                    const std::string output_log,
+                    const std::string output_pictures, int Epoch) {
+    topologyFile_.open(input_topology.c_str());
+    inputDataFile_.open(input_data.c_str());
+    topologyNameFile_ = input_topology;  
+    inputDataNameFile_ = input_data;
+    outputDataNameFile_ = output_data;
+    outputPictures_ = output_pictures;
+    outputLogFile_ = output_log;
+    getTopology();
+    getData();
+    logs_.resize(topology_.size());
+    for (int i = 0; i < topology_.size(); i++) {
+        trainNN(topology_[i], Epoch, i);
     }
+    writeLogs();
 }
 
+void Dataset::trainNN(std::vector<unsigned> &topology, int epoch, int index) {
+    Net mynet(topology);
+    std::vector<double> resultVals;
+    std::fstream appendFileToWorkWith = createDataFile(topology, index);
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    start = std::chrono::system_clock::now();
+    for (int i = 0; i < epoch; i++ ) {
+        for (int j = 0; j < data_.size(); j++) {
+            mynet.feedForward(data_[j].input_);
+            mynet.getResults(resultVals);
+            mynet.backProp(data_[j].output_);
+            appendFileToWorkWith << mynet.getRecentAverageError() << "\n";
+        }
+    }
+    appendFileToWorkWith.close();
+    end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end - start;
+    logs_[index].push_back(std::to_string(mynet.getRecentAverageError()));
+    logs_[index].push_back(std::to_string(elapsed_seconds.count()));
+    drawData(logs_[index][0]);
+}
 
-Dataset::Dataset(const std::string input, const std::string folder) {
+void Dataset::drawData(std::string &file) {
+    std::vector<std::string> temp = Split(file, "/");
+    std::vector<std::string> gnu_name = Split(temp[4],".");
+    std::string gnufile = outputPictures_ + temp[4];
+    delete_files_.push_back(gnufile);
+    const int n = gnufile.length() + 1;
+    char filename[n];
+    //std::strcpy(filename, gnufile.c_str());
+    std::fstream appendFileToWorkWith;
+    appendFileToWorkWith.open(filename, std::fstream::in | std::fstream::out | std::fstream::app);
+    if (!appendFileToWorkWith )  {
+        appendFileToWorkWith.open(filename,  std::fstream::in | std::fstream::out | std::fstream::trunc);
+    }
+    int total_lines = data_.size();
+    auto lines = std::to_string(total_lines + (total_lines * 5 / 100));
+    appendFileToWorkWith << "set terminal pngcairo enhanced font \"arial,10\" fontscale 1.0 size 1080,500" << std::endl;
+    appendFileToWorkWith << "set output '"+ outputPictures_ + gnu_name[0] + ".png'" << std::endl;
+    appendFileToWorkWith << "reset" << std::endl;
+    appendFileToWorkWith << "set xrange [0:"+ lines +"]" << std::endl;
+    appendFileToWorkWith << "set title \"" + gnu_name[0] + "\"" << std::endl;
+    appendFileToWorkWith << "set xlabel \"X\"" << std::endl;
+    appendFileToWorkWith << "set ylabel \"Y\"" << std::endl;
+    appendFileToWorkWith << "set grid" << std::endl;
+    appendFileToWorkWith << "plot \"" + file + "\" title \"\" with line" << std::endl;
+    std::string temppp = "start gnuplot -p " + gnufile + "&";
+    const char * plot = temppp.c_str();
+    system(plot);
+    appendFileToWorkWith.close();
+    if(appendFileToWorkWith.is_open()) {
+        std::cout << "zz";
+    }
+    remove(filename);
+}
+
+std::fstream Dataset::createDataFile(std::vector<unsigned> &topology, int index) {
     auto t = std::time(nullptr);
     auto tm = *std::localtime(&t);
     std::ostringstream oss;
     oss << std::put_time(&tm, "%d-%m-%Y_%H-%M-%S");
     auto str = oss.str();
-    m_trainingDataFile.open(input.c_str());
-    std::string tempError = folder + "data/AverageError_" + str + ".txt";
-    std::string tempEvo = folder + "data/Evolution_" + str + ".txt";
-    nameOutputFile_ = "AverageError_" + str + ".txt";
-    outputFile_ = tempError;
-    outfileError.open(tempError.c_str());
-    outfileEvolution.open(tempEvo.c_str());
-    gnuLogFile_.open("../data/output/pictures/gnulogplot.txt");
-    gnuFile_.open("../data/output/pictures/gnuplot.txt");
-    inputFile_ = input;
+    std::string topology_temp;
+    for (int i = 0; i < topology.size()-1; i++) {
+        topology_temp += std::to_string(topology[i]) + "-";
+    }
+    topology_temp += std::to_string(topology.back());
+    std::string tempError = outputDataNameFile_ + "AverageError_" + topology_temp + "_" + str + ".txt";
+    logs_[index].push_back(tempError);
+    logs_[index].push_back(topology_temp);
+    const int n = tempError.length() + 1;
+    char filename[n];
+    std::strcpy(filename, tempError.c_str());
+    std::fstream appendFileToWorkWith;
+    appendFileToWorkWith.open(filename, std::fstream::in | std::fstream::out | std::fstream::app);
+    if (!appendFileToWorkWith )  {
+        appendFileToWorkWith.open(filename,  std::fstream::in | std::fstream::out | std::fstream::trunc);
+    } 
+    return appendFileToWorkWith;
+}
+
+void Dataset::writeLogs(void) {
+    std::vector<std::string> temp = Split(inputDataNameFile_, "/");
+    std::vector<std::string> temp2 = Split(temp.back(), ".");
+    std::string log_file = outputLogFile_ + temp2.front() + ".log";
+    const int n = log_file.length() + 1;
+    char filename[n];
+    std::strcpy(filename, log_file.c_str());
+    std::fstream logFile;
+    logFile.open(filename, std::fstream::in | std::fstream::out | std::fstream::app);
+    if (!logFile )  {
+        logFile.open(filename,  std::fstream::in | std::fstream::out | std::fstream::trunc);
+    }
+    for (int i = 0; i < logs_.size(); i++) {
+        logFile << logs_[i][1] << " "  << logs_[i][2] << " " << logs_[i][3] << " "  << logs_[i][0] << "\n";
+    }
+    logFile.close();
+}
+
+void Dataset::getData(void) {
+    std::vector<std::string> temp_split;
+    std::vector<double> temp_data;
+    Tensor temp;
+    for (int i = 1; i < Count_lines(inputDataNameFile_) ; i+=2) {
+        temp_split = Split(Get_line(inputDataNameFile_,i)," ");
+        for (int j = 0; j < temp_split.size(); j++) {
+            temp.input_.push_back(std::stod(temp_split[j]));
+        }
+        temp_split.clear();
+        temp_split = Split(Get_line(inputDataNameFile_,i+1)," ");
+        for (int j = 0; j < temp_split.size(); j++) {
+            temp.output_.push_back(std::stod(temp_split[j]));
+        }
+        temp_split.clear();
+        data_.push_back(temp);
+        temp.clear();
+    }
+}
+
+void Dataset::getTopology(void) {
+    std::vector<unsigned> topology_vect;
+    for (int i = 1; i <= Count_lines(topologyNameFile_); i++) {
+        std::string topology = Get_line(topologyNameFile_, i);
+        std::vector<std::string> temp = Split(topology, " ");
+        for (int j = 0; j < temp.size(); j++) {
+            topology_vect.push_back(std::stoul(temp[j],nullptr,0));
+        }
+        topology_.push_back(topology_vect);
+        topology_vect.clear();
+    }
 }
 
 Dataset::~Dataset() {
-    m_trainingDataFile.close();
-    outfileError.close();
-    gnuFile_.close();
-}
-
-void Dataset::writeOutput(std::string text) {
-    outfileEvolution << text;
-}
-
-void Dataset::writeEvolution(std::string label, std::vector<double> &v) {
-    outfileEvolution << label << " ";
-    for (unsigned i = 0; i < v.size(); ++i) {
-        outfileEvolution << v[i] << " ";
-    }
-    outfileEvolution << std::endl;
-}
-
-void Dataset::getTopology(std::vector<unsigned> &topology) {
-    std::string line;
-    std::string label;
-    getline(m_trainingDataFile, line);
-    std::stringstream ss(line);
-    ss >> label;
-    if (this->isEof() || label.compare("topology:") != 0) {
-        abort();
-    }
-    while (!ss.eof()) {
-        unsigned n;
-        ss >> n;
-        topology.push_back(n);
-    }
-    return;
+    topologyFile_.close();
+    inputDataFile_.close();
 }
 
 std::string Dataset::Get_line(const std::string& filename, const int& line_number) {
@@ -105,64 +183,9 @@ std::string Dataset::Get_line(const std::string& filename, const int& line_numbe
   while( (!(inputfile.eof())) && (temp < line_number)) {
     std::getline(inputfile, line);
     ++temp;
-  } 
+  }
   std::getline(inputfile, line);
   return line;
-}
-
-void Dataset::addTopology(std::vector<unsigned> &topology, const std::string topology_file) {
-    std::string line;
-    std::string label;
-    std::ifstream temp_topology;
-    temp_topology.open(topology_file.c_str());
-    getline(temp_topology, line);
-    std::stringstream ss(line);
-    ss >> label;
-    if (this->isEof() || label.compare("topology:") != 0) {
-        abort();
-    }
-    while (!ss.eof()) {
-        unsigned n;
-        ss >> n;
-        topology.push_back(n);
-    }
-    return;
-}
-
-unsigned Dataset::getNextInputs(std::vector<double> &inputVals) {
-    inputVals.clear();
-    std::string line;
-    getline(m_trainingDataFile, line);
-    std::stringstream ss(line);
-    std::string label;
-    ss>> label;
-    if (label.compare("in:") == 0) {
-        double oneValue;
-        while (ss >> oneValue) {
-            inputVals.push_back(oneValue);
-        }
-    }
-    return inputVals.size();
-}
-
-unsigned Dataset::getTargetOutputs(std::vector<double> &targetOutputVals) {
-    targetOutputVals.clear();
-    std::string line;
-    getline(m_trainingDataFile, line);
-    std::stringstream ss(line);
-    std::string label;
-    ss>> label;
-    if (label.compare("out:") == 0) {
-        double oneValue;
-        while (ss >> oneValue) {
-            targetOutputVals.push_back(oneValue);
-        }
-    }
-    return targetOutputVals.size();
-}
-
-void Dataset::writeOutputError(const double value) {
-    outfileError << value << std::endl;
 }
 
 unsigned Dataset::Count_lines (const std::string file) {
@@ -174,110 +197,19 @@ unsigned Dataset::Count_lines (const std::string file) {
     }
     return lines;
 }
-
-void Dataset::seek(void) { 
-    m_trainingDataFile.seekg(0, std::ios::beg); 
-    std::string unused;
-    std::getline(m_trainingDataFile, unused);
-}
-
+/*
 void Dataset::draw(void) {
     int total_lines = Count_lines(outputFile_);
     auto lines = std::to_string(total_lines + (total_lines * 5 / 100));
-    gnuFile_ << "set terminal pngcairo enhanced font \"arial,10\" fontscale 1.0 size 1080,500" << std::endl;
-    gnuFile_ << "set output '../data/output/pictures/" + nameOutputFile_ + ".png'" << std::endl;
-    gnuFile_ << "reset" << std::endl;
-    gnuFile_ << "set xrange [0:"+ lines +"]" << std::endl;
-    gnuFile_ << "set title \"" + nameOutputFile_ + "\"" << std::endl;
-    gnuFile_ << "set xlabel \"X\"" << std::endl;
-    gnuFile_ << "set ylabel \"Y\"" << std::endl;
-    gnuFile_ << "set grid" << std::endl;
-    gnuFile_ << "plot \"" + outputFile_ + "\" title \"\" with line" << std::endl;
-}
-
-void Dataset::writeLogs(std::vector<unsigned> &topology, double error, double time, int &training) {
-    std::vector<std::string> temp = Split(inputFile_, "/");
-    std::vector<std::string> temp2 = Split(temp.back(), ".");
-    std::string log_file = "../data/output/logs/" + temp2.front() + ".log";
-    const int n = log_file.length() + 1;
-    char filename[n];
-    std::strcpy(filename, log_file.c_str());
-    std::fstream appendFileToWorkWith;
-    appendFileToWorkWith.open(filename, std::fstream::in | std::fstream::out | std::fstream::app);
-    // If file does not exist, Create new file
-    if (!appendFileToWorkWith )  {
-        appendFileToWorkWith.open(filename,  std::fstream::in | std::fstream::out | std::fstream::trunc);
-    }     // use existing file
-    for (int i = 0; i < topology.size(); i++) {
-        appendFileToWorkWith << topology[i] << " ";
-    }
-    topology.clear();
-    appendFileToWorkWith << " | " << error << " | " << training << " | " << time << " | " << nameOutputFile_ <<"\n";
-    appendFileToWorkWith.close();
-    appendFileToWorkWith.close();
-}
-
-void Dataset::trainNN(unsigned epoch, Net &myNet, std::vector<unsigned> &topology, const std::string topology_file) {
-    unsigned topology_counter = Count_lines(topology_file);
-    std::vector<unsigned> topology_new;
-    std::string line;
-    std::string label;
-    std::ifstream temp_topology;
-    temp_topology.open(topology_file.c_str());
-    for (int i = 0; i < topology_counter; i++) {
-        getline(temp_topology, line);
-        std::stringstream ss(line);
-        ss >> label;
-        if (this->isEof() || label.compare("topology:") != 0) {
-            abort();
-        }
-        while (!ss.eof()) {
-            unsigned n;
-            ss >> n;
-            topology_new.push_back(n);
-        }
-        trainNN(epoch, myNet, topology_new);
-        topology_new.clear();
-    }
-}
-
-void Dataset::trainNN(unsigned epoch, Net &myNet, std::vector<unsigned> &topology) {
-    std::vector<double> inputVals, targetVals, resultVals;
-    int trainingPass = 0;
-    int total_training = 0;
-    std::chrono::time_point<std::chrono::system_clock> start, end;
-    start = std::chrono::system_clock::now();
-    for (int i = 0; i < epoch; i++) {
-        auto epo = std::to_string(i);
-        writeOutput("Epoch " + epo + "\n"); 
-        while (!isEof()) {
-            ++total_training;
-            ++trainingPass;
-            auto s = std::to_string(trainingPass);
-            writeOutput("Data " + s);
-            if (getNextInputs(inputVals) != topology[0]) {
-                break;
-            }
-            writeEvolution(": Inputs:", inputVals);
-            myNet.feedForward(inputVals);
-            myNet.getResults(resultVals);
-            writeEvolution("Outputs:", resultVals);
-            getTargetOutputs(targetVals);
-            writeEvolution("Targets:", targetVals);
-            assert(targetVals.size() == topology.back());
-            myNet.backProp(targetVals);
-            writeOutputError(myNet.getRecentAverageError());
-        }
-        trainingPass = 0;
-        clear();
-        seek();
-    }
-    end = std::chrono::system_clock::now();
-    std::chrono::duration<double> elapsed_seconds = end - start;
-    std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-    draw();
-    writeLogs(topology,myNet.getRecentAverageError(),elapsed_seconds.count(),total_training);
-    system("start gnuplot -p ../data/output/pictures/gnuplot.txt");
+    appendFileToWorkWith << "set terminal pngcairo enhanced font \"arial,10\" fontscale 1.0 size 1080,500" << std::endl;
+    appendFileToWorkWith << "set output '../data/output/pictures/" + nameOutputFile_ + ".png'" << std::endl;
+    appendFileToWorkWith << "reset" << std::endl;
+    appendFileToWorkWith << "set xrange [0:"+ lines +"]" << std::endl;
+    appendFileToWorkWith << "set title \"" + nameOutputFile_ + "\"" << std::endl;
+    appendFileToWorkWith << "set xlabel \"X\"" << std::endl;
+    appendFileToWorkWith << "set ylabel \"Y\"" << std::endl;
+    appendFileToWorkWith << "set grid" << std::endl;
+    appendFileToWorkWith << "plot \"" + outputFile_ + "\" title \"\" with line" << std::endl;
 }
 
 void Dataset::logResults(void) {
@@ -323,7 +255,7 @@ void Dataset::drawLogs(void) {
     gnuLogFile_ << "set grid" << std::endl;
     gnuLogFile_ << "plot 'xor.dat' w point pt 7, '' with labels center offset 3.4,.5 notitle" << std::endl;
 }
-
+*/
 std::vector<std::string> Dataset::Split (std::string str, std::string delim) {
   /// @brief this func split in 2 the string and store them in vector, 
   //         depending of the char

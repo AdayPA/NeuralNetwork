@@ -1,9 +1,15 @@
 #include "net.cpp"
 #include "dataset.cpp"
 
-int main() {
+#include <iostream>
+#include <thread>
 
-    Dataset data("../data/input/xor.txt", "../data/output/", "../data/input/topology.txt", 2);
+
+
+
+int main(void) {
+
+    Dataset data("../data/input/xor.txt", "../data/input/topology.txt", "../data/output/data/","../data/output/log/","../data/output/pictures/", 1);
     /*
     Dataset data("../data/input/xor.txt", "../data/output/");
     std::vector<unsigned> topology;
@@ -14,6 +20,5 @@ int main() {
     data.trainNN(Epoch, myNet, topology, "../data/input/topology.txt");
     data.logResults();
 */
-
     return 0;
 }

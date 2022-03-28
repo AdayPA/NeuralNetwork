@@ -1,2 +1,2 @@
-topology: 2 5 1
-topology: 2 3 1
+2 2 1
+2 3 1
