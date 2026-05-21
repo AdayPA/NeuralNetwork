@@ -2,6 +2,10 @@
 
 A small C++ feed-forward neural network that trains with backpropagation on the XOR problem. The project includes a Makefile plus helper scripts to inspect training results and render the network topology.
 
+## Project Notes
+
+This repository is kept as a compact educational example of a neural network implemented from scratch in C++. The README documents how to build, run, inspect, and clean the project without committing generated binaries or training outputs.
+
 ## Features
 
 - Configurable network topologies from `data/input/topology.txt`
